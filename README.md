@@ -11,9 +11,31 @@ A GitHub action for single chart or multi-chart repositories that performs push 
 1. Create a workflow `.yml` file in your `.github/workflows` directory. An [example workflow](#example-workflow) is available below.
    For more information, reference the GitHub Help Documentation for [Creating a workflow file](https://help.github.com/en/articles/configuring-a-workflow#creating-a-workflow-file)
 
+## ⚠️ Important: Token Permissions for Chart Dependencies
+
+When using this action with Helm charts that have dependencies, the default `GITHUB_TOKEN` might not have sufficient permissions to access those dependencies if they're stored in GitHub Container Registry (ghcr.io). This is because:
+
+1. The `GITHUB_TOKEN` is scoped only to the current repository
+2. It cannot access packages from other repositories unless those packages are explicitly connected to your repository
+3. You may encounter errors like: `403 Forbidden` when trying to download dependencies
+
+**Solutions:**
+
+- **Option 1:** Set `skip_dependencies: true` to avoid dependency resolution
+- **Option 2:** Use a Personal Access Token (PAT) with appropriate scopes:
+  ```yaml
+  with:
+    oci_username: ${{ github.actor }}
+    oci_password: ${{ secrets.PAT_WITH_PACKAGE_ACCESS }}  # PAT with read:packages
+    github_token: ${{ secrets.PAT_WITH_PACKAGE_ACCESS }}
+  ```
+- **Option 3:** Ensure all dependencies are connected to your repository
+
+For more information, see [GitHub Packages documentation](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry).
+
 ### Inputs
 
-- `version`: The helm version to use (default: v0.1.1)
+- `version`: The helm version to use (default: v0.1.2)
 - `charts_dir`: The charts directory
 - **`oci_registry`**: The OCI registry host
 - **`oci_username`**: The username used to login to the OCI registry
