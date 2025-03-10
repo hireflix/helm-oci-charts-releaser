@@ -1,0 +1,20 @@
+name: Test Workflow
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+        DEBUG: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run helm-oci-charts-releaser
+        uses: ./
+        with:
+          oci_registry: ghcr.io
+          oci_path: hireflix
+          oci_username: 2snEM6
+          oci_password: test_password
+          charts_dir: stable
+          github_token: test_token
+          version: v3.13.2
+          mark_as_latest: true
