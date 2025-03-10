@@ -16,24 +16,30 @@ if [[ ! $BUMP_TYPE =~ ^(major|minor|patch)$ ]]; then
     exit 1
 fi
 
-# Get the latest tag, defaulting to empty if no tags exist
-LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+# Get all version tags and sort them
+ALL_TAGS=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | sort -V)
+LATEST_TAG=$(echo "$ALL_TAGS" | tail -n 1)
+
+# Debug information
+echo "All existing version tags:"
+echo "$ALL_TAGS"
+echo "Latest tag found: $LATEST_TAG"
 
 # If no tags exist, start with v0.0.0
 if [ -z "$LATEST_TAG" ]; then
     VERSION="0.0.0"
-    # For first release, use all commits
-    RELEASE_NOTES=$(git log --pretty=format:"- %s" | grep -v "Merge" || echo "Initial release")
+    echo "No existing version tags found, starting with v0.0.0"
 else
     # Remove 'v' prefix for version calculations
     VERSION=${LATEST_TAG#v}
-    # Get commits since last tag
-    RELEASE_NOTES=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" | grep -v "Merge" || echo "No changes")
+    echo "Found latest version: $VERSION"
 fi
 
 MAJOR=$(echo $VERSION | cut -d. -f1)
 MINOR=$(echo $VERSION | cut -d. -f2)
 PATCH=$(echo $VERSION | cut -d. -f3)
+
+echo "Current version components: major=$MAJOR, minor=$MINOR, patch=$PATCH"
 
 # Calculate new version
 case $BUMP_TYPE in
@@ -57,20 +63,7 @@ esac
 NEW_VERSION="v$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
 MAJOR_VERSION="v$NEW_MAJOR"
 
-# Check if tag already exists
-if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
-    echo "Warning: Tag $NEW_VERSION already exists!"
-    read -p "Do you want to delete and recreate this tag? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Deleting existing tag..."
-        git tag -d "$NEW_VERSION" 2>/dev/null || true
-        git push origin ":$NEW_VERSION" 2>/dev/null || true
-    else
-        echo "Release cancelled"
-        exit 1
-    fi
-fi
+echo "Calculated new version: $NEW_VERSION"
 
 # Update version in README.md if it exists
 if [[ -f README.md ]]; then
@@ -82,6 +75,13 @@ if [[ -f README.md ]]; then
         sed -i.bak 's/version`: The helm version to use (default: v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*)/version`: The helm version to use (default: '"$NEW_VERSION"')/g' README.md
         rm -f README.md.bak
     fi
+fi
+
+# Get release notes
+if [ -z "$LATEST_TAG" ]; then
+    RELEASE_NOTES=$(git log --pretty=format:"- %s" | grep -v "Merge" || echo "Initial release")
+else
+    RELEASE_NOTES=$(git log ${LATEST_TAG}..HEAD --pretty=format:"- %s" | grep -v "Merge" || echo "No changes")
 fi
 
 echo "Current version: ${LATEST_TAG:-none}"
