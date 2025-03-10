@@ -35,6 +35,9 @@ inputs:
   oci_password:
     description: The OCI user's password
     required: true
+  oci_path:
+    description: The OCI path to construct full path as {{oci-registry}}/{{oci-path}}
+    required: true
   github_token:
     description: Github Actions token must be provided to manage release creation and update
     required: true
@@ -56,12 +59,15 @@ inputs:
   mark_as_latest:
     description: "Mark the created GitHub release as 'latest'"
     required: false
-    default: true
+    default: "true"
   tag_name_pattern:
     description: "Specifies GitHub repository release naming pattern (ex. '{chartName}-chart')"
     required: false
   skip_gh_release:
     description: "Skip the GitHub release creation"
+    required: false
+  skip_existing:
+    description: "Skip existing chart versions"
     required: false
 outputs:
   changed_charts:
