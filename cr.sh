@@ -490,7 +490,12 @@ release_chart() {
   fi
 
   debug "Pushing chart to OCI registry: $oci_registry"
-  dry_run helm push "${chart_package}" "oci://${oci_registry#oci://}"
+  # Use the oci_path when pushing to create the full repository path
+  if [[ -n "$oci_path" ]]; then
+    dry_run helm push "${chart_package}" "oci://${oci_registry#oci://}/${oci_path}/${name}"
+  else
+    dry_run helm push "${chart_package}" "oci://${oci_registry#oci://}/${name}"
+  fi
 
   if (! $releaseExists && ! $skip_gh_release); then
     debug "Creating GitHub release"
