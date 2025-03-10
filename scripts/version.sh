@@ -6,6 +6,9 @@ set -e
 BUMP_TYPE=${1:-patch}
 DRY_RUN=${DRY_RUN:-false}
 
+# Check if gh CLI is available
+HAS_GH_CLI=$(command -v gh >/dev/null 2>&1 && echo true || echo false)
+
 # Validate bump type
 if [[ ! $BUMP_TYPE =~ ^(major|minor|patch)$ ]]; then
     echo "Error: Bump type must be one of: major, minor, patch"
@@ -58,9 +61,10 @@ MAJOR_VERSION="v$NEW_MAJOR"
 if [[ -f README.md ]]; then
     echo "Updating version in README.md..."
     if ($DRY_RUN); then
-        echo "[DRY RUN] Would update version references in README.md"
+        echo "[DRY RUN] Would update version in README.md"
     else
-        sed -i.bak "s/@v[0-9]\+\.[0-9]\+\.[0-9]\+/@$NEW_VERSION/g" README.md
+        # Update the specific line with helm version
+        sed -i.bak 's/version`: The helm version to use (default: v[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*)/version`: The helm version to use (default: '"$NEW_VERSION"')/g' README.md
         rm -f README.md.bak
     fi
 fi
@@ -76,6 +80,9 @@ if ($DRY_RUN); then
     echo "git tag -fa $MAJOR_VERSION -m \"Update $MAJOR_VERSION tag\""
     echo "git push origin $NEW_VERSION"
     echo "git push -f origin $MAJOR_VERSION"
+    if ($HAS_GH_CLI); then
+        echo "gh release create $NEW_VERSION"
+    fi
     exit 0
 fi
 
@@ -99,5 +106,17 @@ git tag -fa $MAJOR_VERSION -m "Update $MAJOR_VERSION tag"
 echo "Pushing tags..."
 git push origin $NEW_VERSION
 git push -f origin $MAJOR_VERSION
+
+# Create GitHub release if gh CLI is available
+if ($HAS_GH_CLI); then
+    echo "Creating GitHub release..."
+    gh release create $NEW_VERSION \
+        --title "Release $NEW_VERSION" \
+        --notes "$RELEASE_NOTES" \
+        --latest
+else
+    echo "Note: GitHub CLI (gh) is not installed. Skipping GitHub release creation."
+    echo "To create GitHub releases, install the GitHub CLI from: https://cli.github.com/"
+fi
 
 echo "Release $NEW_VERSION completed successfully!" 
