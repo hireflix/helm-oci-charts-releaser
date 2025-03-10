@@ -492,7 +492,7 @@ release_chart() {
   debug "Pushing chart to OCI registry: $oci_registry"
   # Use the oci_path when pushing to create the full repository path
   if [[ -n "$oci_path" ]]; then
-    dry_run helm push "${chart_package}" "oci://${oci_registry#oci://}/${oci_path}/${name}"
+    dry_run helm push "${chart_package}" "oci://${oci_registry#oci://}/${oci_path}"
   else
     dry_run helm push "${chart_package}" "oci://${oci_registry#oci://}/${name}"
   fi
