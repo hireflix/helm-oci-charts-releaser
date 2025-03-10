@@ -35,7 +35,7 @@ For more information, see [GitHub Packages documentation](https://docs.github.co
 
 ### Inputs
 
-- `version`: The helm version to use (default: v0.2.0)
+- `version`: The helm version to use (default: v0.3.0)
 - `charts_dir`: The charts directory
 - **`oci_registry`**: The OCI registry host
 - **`oci_username`**: The username used to login to the OCI registry
