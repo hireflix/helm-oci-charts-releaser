@@ -57,6 +57,21 @@ esac
 NEW_VERSION="v$NEW_MAJOR.$NEW_MINOR.$NEW_PATCH"
 MAJOR_VERSION="v$NEW_MAJOR"
 
+# Check if tag already exists
+if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
+    echo "Warning: Tag $NEW_VERSION already exists!"
+    read -p "Do you want to delete and recreate this tag? (y/N) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Deleting existing tag..."
+        git tag -d "$NEW_VERSION" 2>/dev/null || true
+        git push origin ":$NEW_VERSION" 2>/dev/null || true
+    else
+        echo "Release cancelled"
+        exit 1
+    fi
+fi
+
 # Update version in README.md if it exists
 if [[ -f README.md ]]; then
     echo "Updating version in README.md..."
